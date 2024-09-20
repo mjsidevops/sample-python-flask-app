@@ -1,0 +1,195 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CodePipeline with GitHub, CodeBuild, and CodeDeploy
+
+Parameters:
+  GitHubUser:
+    Description: "GitHub Username"
+    Type: String
+  GitHubRepo:
+    Description: "GitHub Repository Name"
+    Type: String
+  GitHubBranch:
+    Description: "Branch to trigger the pipeline"
+    Type: String
+  # CodeBuildProjectName:
+  #   Description: "Name for the CodeBuild project"
+  #   Type: String
+  # CodeDeployApplicationName:
+  #   Description: "CodeDeploy Application Name"
+  #   Type: String
+  # CodeDeployDeploymentGroupName:
+  #   Description: "CodeDeploy Deployment Group Name"
+  #   Type: String
+
+Resources:
+  # IAM Role for CodePipeline
+  CodePipelineServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Principal: 
+              Service: 
+                - "codepipeline.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "CodePipelinePolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "codebuild:*"
+                  - "codedeploy:*"
+                  - "s3:*"
+                  - "cloudformation:*"
+                  - "lambda:*"
+                  - "ssm:*"
+                Resource: "*"
+
+  # CodePipeline
+  MyPipeline:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: GitHub_Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                Owner: !Ref GitHubUser
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Sub "{{resolve:ssm-secure:github-token}}"
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: CodeBuild
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: BuildArtifact
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectName
+              RunOrder: 1
+        # - Name: Deploy
+        #   Actions:
+        #     - Name: CodeDeploy
+        #       ActionTypeId:
+        #         Category: Deploy
+        #         Owner: AWS
+        #         Provider: CodeDeploy
+        #         Version: 1
+        #       InputArtifacts:
+        #         - Name: BuildArtifact
+        #       Configuration:
+        #         ApplicationName: !Ref CodeDeployApplicationName
+        #         DeploymentGroupName: !Ref CodeDeployDeploymentGroupName
+        #       RunOrder: 1
+
+  # S3 Bucket for Pipeline Artifacts
+  PipelineArtifactsBucket:
+    Type: "AWS::S3::Bucket"
+
+  # CodeBuild Project
+  CodeBuildProject:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Name: !Ref CodeBuildProjectName
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 30
+
+  # IAM Role for CodeBuild
+  CodeBuildServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Principal: 
+              Service: 
+                - "codebuild.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "CodeBuildPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "logs:*"
+                  - "s3:*"
+                  - "codebuild:*"
+                  - "cloudwatch:*"
+                Resource: "*"
+
+  # # CodeDeploy Application
+  # CodeDeployApplication:
+  #   Type: "AWS::CodeDeploy::Application"
+  #   Properties:
+  #     ApplicationName: !Ref CodeDeployApplicationName
+
+  # # CodeDeploy Deployment Group
+  # CodeDeployDeploymentGroup:
+  #   Type: "AWS::CodeDeploy::DeploymentGroup"
+  #   Properties:
+  #     ApplicationName: !Ref CodeDeployApplicationName
+  #     DeploymentGroupName: !Ref CodeDeployDeploymentGroupName
+  #     ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
+
+  # # IAM Role for CodeDeploy
+  # CodeDeployServiceRole:
+  #   Type: "AWS::IAM::Role"
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: "Allow"
+  #           Principal:
+  #             Service:
+  #               - codedeploy.amazonaws.com
+  #           Action:
+  #             - sts:AssumeRole
+  #     Policies:
+  #       - PolicyName: "CodeDeployPolicy"
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Effect: "Allow"
+  #               Action:
+  #                 - codedeploy:*
+  #                 - ec2:*
+  #                 - autoscaling:*
+  #               Resource: "*"
+
+# Outputs:
+#   PipelineURL:
+#     Description: "URL of the AWS CodePipeline"
+#     Value: !Sub "https://console.aws.amazon.com/codesuite/codepipeline/pipelines/${MyPipeline}/view"
+#     Export:
+#       Name: PipelineURL

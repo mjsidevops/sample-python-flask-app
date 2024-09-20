@@ -1,0 +1,9 @@
+Parameters:
+  - ParameterKey: GitHubUser
+    ParameterValue: mjsidevops
+  - ParameterKey: GitHubRepo
+    ParameterValue: https://github.com/mjsidevops/sample-python-flask-app
+  - ParameterKey: GitHubBranch
+    ParameterValue: main
+    
+  
