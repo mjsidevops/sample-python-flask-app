@@ -66,7 +66,7 @@ Resources:
                 Category: Source
                 Owner: ThirdParty
                 Provider: GitHub
-                Version: 2
+                Version: '2'
               OutputArtifacts:
                 - Name: SourceArtifact
               Configuration:
