@@ -70,7 +70,7 @@ Resources:
                 Owner: !Ref GitHubUser
                 Repo: !Ref GitHubRepo
                 Branch: !Ref GitHubBranch
-                OAuthToken: !Sub "{{resolve:ssm-secure:github-token}}"
+                OAuthToken: '{{resolve:ssm-secure:github-token}}'
               RunOrder: 1
         - Name: Build
           Actions:
