@@ -3,5 +3,5 @@ parameters:
     GitHubUser: mjsidevops
     GitHubRepo: sample-python-flask-app
     GitHubBranch: main
-    CodeBuildProjectName: python-app-codebuildProject
+    CodeBuildProjectName: python-app-codebuildProject4
 #tags
