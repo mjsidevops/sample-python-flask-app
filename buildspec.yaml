@@ -10,7 +10,7 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region us-east-1 | docker login --username jabir --password-stdin 730335664748.dkr.ecr.us-east-1.amazonaws.com
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 730335664748.dkr.ecr.us-east-1.amazonaws.com
       - echo Building the Docker image...
       - docker build -t my-python-app .
       - docker tag my-python-app:latest 730335664748.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/my-python-app:latest
