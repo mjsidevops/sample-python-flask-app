@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo Installing dependencies...
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
+      
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region us-east-1 | docker login --username jabir --password-stdin 730335664748.dkr.ecr.us-east-1.amazonaws.com
+      - echo Building the Docker image...
+      - docker build -t my-python-app .
+      - docker tag my-python-app:latest 730335664748.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/my-python-app:latest
+      
+  build:
+    commands:
+      - echo Pushing the Docker image to ECR...
+      - docker push 730335664748.dkr.ecr.us-east-1.amazonaws.com/my-python-app:latest
+
+  post_build:
+    commands:
+      - echo Build completed successfully.
+      
+artifacts:
+  files:
+    - '**/*'
