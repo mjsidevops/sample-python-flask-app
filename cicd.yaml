@@ -11,9 +11,9 @@ Parameters:
   GitHubBranch:
     Description: "Branch to trigger the pipeline"
     Type: String
-  # CodeBuildProjectName:
-  #   Description: "Name for the CodeBuild project"
-  #   Type: String
+  CodeBuildProjectName:
+    Description: "Name for the CodeBuild project"
+    Type: String
   # CodeDeployApplicationName:
   #   Description: "CodeDeploy Application Name"
   #   Type: String
