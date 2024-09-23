@@ -149,6 +149,7 @@ Resources:
                   - "s3:*"
                   - "codebuild:*"
                   - "cloudwatch:*"
+                  - "ecr:*"
                 Resource: "*"
 
   # # CodeDeploy Application
